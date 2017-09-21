@@ -30,10 +30,10 @@ def main( ):
     make_loger()
     log.info('------------  '+ myname +'  ------------')
 
-    if  aris_pro_downloader.download( myname ) :
-        aris_pro_converter.convert2csv( myname )
-        shutil.copy2( myname + '.csv', 'c://AV_PROM/prices/' + myname +'/'+ myname + '.csv')
-        shutil.copy2( 'python.log',    'c://AV_PROM/prices/' + myname +'/python.log')
+    aris_pro_downloader.download( myname ) 
+    #aris_pro_converter.convert2csv( 'new_Price_Cables_150517.xls', myname )
+    #    shutil.copy2( myname + '.csv', 'c://AV_PROM/prices/' + myname +'/'+ myname + '.csv')
+    #    shutil.copy2( 'python.log',    'c://AV_PROM/prices/' + myname +'/python.log')
 
 if __name__ == '__main__':
     global  myname

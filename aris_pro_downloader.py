@@ -4,6 +4,7 @@ import logging
 import logging.config
 import time
 import shutil
+from   aris_pro_converter import convert2csv
  
 
 
@@ -46,29 +47,29 @@ def download( myname ):
                 os.remove(new_name + new_ext)   
                 dir_afte_download = set(os.listdir(os.getcwd()))
                 new_files = list( dir_afte_download.difference(dir_befo_download))
+                os.chdir(work_dir)
                 for new_file in new_files :
-                    print(new_file)   
                     new_ext  = os.path.splitext(new_file)[-1]
-                    DnewFile = os.path.join( os.getcwd(),new_file)
+                    DnewFile = os.path.join( pathDwnld,new_file)
                     new_file_date = os.path.getmtime(DnewFile)
                     log.debug( 'Файл из архива ' +DnewFile + ' имеет дату ' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(new_file_date) ) )
                     DnewPrice = DnewFile
-                os.chdir(work_dir)
-            if DnewPrice != "dummy" :
-                FoldName = 'old_' + myname + new_ext                                    # Предыдущая копия прайса, для сравнения даты
-                FnewName = 'new_' + myname + new_ext                                    # Файл, с которым работает макрос
-                if  (not os.path.exists( FnewName)) or new_file_date>os.path.getmtime(FnewName) : 
-                    log.debug( 'Предыдущего прайса нет или он устарел. Копируем новый.' )
-                    if os.path.exists( FoldName): os.remove( FoldName)
-                    if os.path.exists( FnewName): os.rename( FnewName, FoldName)
-                    shutil.copy2(DnewPrice, FnewName)
-                    retCode = True
-                else:
-                    log.debug( 'Предыдущий прайс не старый, копироавать не надо.' )
-                # Убрать скачанные файлы
-                if  os.path.exists(DnewPrice):  
-                    os.remove(DnewPrice)
-#                    os.rename(FnewName, 'new_brullov.xlsx')
+                    FoldName = 'old_' + new_file                                        # Предыдущая копия прайса, для сравнения даты
+                    FnewName = 'new_' + new_file                                        # Файл, с которым работает макрос
+                    if  (not os.path.exists( FnewName)) or new_file_date>os.path.getmtime(FnewName) : 
+                        log.debug( 'Предыдущего прайса нет или он устарел. Копируем новый.' )
+                        if os.path.exists( FoldName): os.remove( FoldName)
+                        if os.path.exists( FnewName): os.rename( FnewName, FoldName)
+                        shutil.copy2(DnewFile, FnewName)
+                        #
+                        #       Вызов конвертации файла
+                        #
+                        retCode = convert2csv( FnewName, myname)
+                    else:
+                        log.debug( 'Предыдущий прайс не старый, копироавать не надо.' )
+                    # Убрать скачанные файлы
+                    if  os.path.exists(DnewFile):  
+                        os.remove(DnewFile)
                         
         elif len(new_files) == 0 :        
             log.debug( 'Не удалось скачать файл прайса ')
