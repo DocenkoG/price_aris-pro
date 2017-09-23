@@ -9,7 +9,7 @@ import configparser
 import time
 # import openpyxl                   # Для .xlsx
 import xlrd                         # для .xls
-from  price_tools import getCell, quoted, dump_cell, currencyType
+from  price_tools import getCell, quoted, dump_cell, currencyType, subInParentheses
 
 
 def make_loger():
@@ -19,7 +19,7 @@ def make_loger():
 
 
 
-def convert2csv_cables( pFileName):
+def convert2csv_pro( pFileName):
     global log
     global SheetName
     #global FilenameIn
@@ -45,97 +45,96 @@ def convert2csv_cables( pFileName):
     log.debug('Begin ' + __name__ + ' convert2csv')
 
     # Прочитать конфигурацию из файла
-    ff = config_read( 'aris_pro_cfg_cables' )
+    ff = config_read( 'aris_pro_cfg_pro' )
     log.debug('Открываю файл '+ pFileName)
 #   book = openpyxl.load_workbook(filename = pFileName, read_only=False, keep_vba=False, data_only=False)
     book = xlrd.open_workbook( pFileName.encode('cp1251'), formatting_info=True)
 #   book = xlrd.open_workbook( os.path.join( mydir, pFileName.encode('cp1251')), formatting_info=True)
-    
-    log.debug('Устанавливаю страницу ' + SheetName )
-    sh = book.sheet_by_name( SheetName )                     # xls
-#   sh = book[SheetName]                                     # xlsx   
-       
- 
+        
     ssss = []
     line_qty = 0
-    log.debug('На странице %d строк' % sh.nrows)
-                                                             # цикл по строкам файла
-    brand = ''
-    grpName = ''
-    for i in range( 0, sh.nrows) :
-        line_qty += 1
-        xfx = sh.cell_xf_index(i, colGrp-1)
-        xf  = book.xf_list[xfx]
-        bgcx  = xf.background.pattern_colour_index
-        fonti = xf.font_index
-        try:
-            ccc = sh.cell(i, colGrp-1)
-            if ccc.value == None :
-                print (i, colGrp, 'Пусто!!!')
+    for sh in book.sheets() :
+        log.debug('Устанавливаю страницу ' + sh.name )
+        log.debug('На странице %d строк' % sh.nrows)
+                                                                 # цикл по строкам страницы
+        brand = ''
+        grpName = sh.name
+        for i in range( 0, sh.nrows) :
+            line_qty += 1
+            xfx = sh.cell_xf_index(i, colSGrp-1)
+            xf  = book.xf_list[xfx]
+            bgcx  = xf.background.pattern_colour_index
+            fonti = xf.font_index
+            try:
+                ccc = sh.cell(i, colSGrp-1)
+                if ccc.value == None :
+                    print (i, colSGrp, 'Пусто!!!')
+                    continue
+                '''                                        # Атрибуты шрифта для настройки конфига
+                font = book.font_list[fonti]
+                print( '---------------------- Строка', i, '-----------------------' )
+                print( 'Строка', i, sh.cell(i, 1).value)
+                print( 'background_colour_index=',bgcx)
+                print( 'fonti=', fonti)
+                print( 'bold=', font.bold)
+                print( 'weight=', font.weight)
+                print( 'height=', font.height)
+                print( 'italic=', font.italic)
+                print( 'colour_index=', font.colour_index )
+                print( 'name=', font.name)
+                
                 continue
-            '''                                        # Атрибуты шрифта для настройки конфига
-            font = book.font_list[fonti]
-            print( '---------------------- Строка', i, '-----------------------' )
-            print( 'Строка', i, sh.cell(i, 1).value)
-            print( 'background_colour_index=',bgcx)
-            print( 'fonti=', fonti)
-            print( 'bold=', font.bold)
-            print( 'weight=', font.weight)
-            print( 'height=', font.height)
-            print( 'italic=', font.italic)
-            print( 'colour_index=', font.colour_index )
-            print( 'name=', font.name)
-            
-            continue
-            '''
-
-            if (fonti == GrpFonti):                                      # Группа 
-                grpName = quoted(sh.cell(i,colGrp-1).value)   
-                subGrpName = ''
-                brand = 'Klotz'
-                print('группа', grpName)
-#            elif SubGrpFontSize == ccc.font.size :                      # Подгруппа
-#                subGrpName = quoted(sh.cell(row=i,column=colSGrp).value)
-#            if True == ccc.font.bold :                                  # Заголовок таблицы
-#                print('ddd')
-#                pass
-            elif ('' == sh.cell(i, in_columns_j['цена']-1).value) :      # Пустая строка
-                print('xxxx')
-            else :                                                       # Информационная строка
-                sss = []                                                 # формируемая строка для вывода в файл
-                for outColName in out_columns_names :
-                    if outColName in out_columns_j :
-                        if outColName in ('закупка','продажа','цена') :
-                            ss = getCell(i, out_columns_j[outColName]-1, 'Y', sh) 
-                        else:
-                            ss = quoted( getCell(i, out_columns_j[outColName]-1, 'N', sh))
-                    else : 
-                        # вычисляемое поле
-                        if   outColName == 'бренд' :
-                            ss = brand
-                        elif outColName == 'наименование' :
-                            s1 = getCell(i, in_columns_j['модель']-1,   'N', sh)
-                            s2 = getCell(i, in_columns_j['описание']-1, 'N', sh)
-                            ss = quoted( brand + ' ' + s1 + ' ' + s2)
-                        elif outColName == 'закупка' :
-                            s1 = getCell(i, in_columns_j['цена']-1,     'Y', sh)
-                            ss = str( float(s1)*0.75)
-                        elif outColName == 'валюта' :
-                            ss = currencyType(sh, i, in_columns_j['валюта']-1)
-                        else :
-                            log.debug('Не определено вычисляемое поле: <' + outColName + '>' )
-                    sss.append(ss)
+                '''
     
-                sss.append(brand)
-                sss.append(grpName)
-                ssss.append(','.join(sss))
-            #else :
-            #    log.debug('Нераспознана строка: <' + sh.cell(i, in_columns_j['модель']-1).value + '>' )
-        except Exception as e:
-            log.debug('Exception: <' + str(e) + '> при обработке строки ' + str(i) )
-            raise e
-
-    log.debug('------------  Обработка страницы завершена. ------------')
+#                if (GrpBackgroundColor == ???):                                # Группа 
+#                    grpName = quoted(sh.cell(i,colGrp-1).value)   
+#                    subGrpName = 'zzzzzzzz'
+#                    brand = 'Klz'
+#                    print('группа', grpName)
+                if SubGrpBackgroundColor == bgcx :                              # Подгруппа
+                    subGrpNameNQ = sh.cell(i, colSGrp-1).value
+                    subGrpName = quoted(subGrpNameNQ)
+                    brand = subInParentheses( subGrpName)
+#                if True == ccc.font.bold :                                     # Заголовок таблицы
+#                    print('ddd')
+#                    pass
+                elif (  '' == sh.cell(i, in_columns_j['цена']   -1).value) \
+                    or ('' == sh.cell(i, in_columns_j['артикул']-1).value) :    # Пустая строка
+                    pass
+                else :                                                          # Информационная строка
+                    sss = []                                                    # формируемая строка для вывода в файл
+                    for outColName in out_columns_names :
+                        if outColName in out_columns_j :
+                            if outColName in ('закупка','продажа','цена') :
+                                ss = getCell(i, out_columns_j[outColName]-1, 'Y', sh) 
+                            else:
+                                ss = quoted( getCell(i, out_columns_j[outColName]-1, 'N', sh))
+                        else : 
+                            # вычисляемое поле
+                            if   outColName == 'бренд' :
+                                ss = brand
+                            elif outColName == 'наименование' :
+                                s1 = getCell(i, in_columns_j['модель']-1,   'N', sh)
+                                s2 = getCell(i, in_columns_j['описание']-1, 'N', sh)
+                                ss = quoted( subGrpNameNQ + ' ' + s1 + ' ' + s2)
+                            elif outColName == 'закупка' :
+                                s1 = getCell(i, in_columns_j['цена']-1,     'Y', sh)
+                                ss = str( float(s1)*0.75)
+                            elif outColName == 'валюта' :
+                                ss = currencyType(sh, i, in_columns_j['валюта']-1)
+                            else :
+                                log.debug('Не определено вычисляемое поле: <' + outColName + '>' )
+                        sss.append(ss)
+        
+                    sss.append(brand)
+                    sss.append(grpName)
+                    sss.append(subGrpName)
+                    ssss.append(','.join(sss))
+            except Exception as e:
+                log.debug('Exception: <' + str(e) + '> при обработке строки ' + str(i) )
+                raise e
+    
+        log.debug('------------  Обработка страницы завершена. ------------')
     
     f2 = open( FilenameOut, 'w', encoding='cp1251')
     f2.write(strHeader  + ',\n')
@@ -202,7 +201,7 @@ def config_read( myname ):
     for vName in out_columns_j :
         print(vName, '\t', out_columns_j[vName])    
     print('-----------------------------------')
-    strHeader = ','.join(out_columns_names)           +',бренд,группа'  # +',подгруппа'
+    strHeader = ','.join(out_columns_names)           +',бренд,группа,подгруппа'
     print('HEAD =', strHeader)
 
     # считываем имена файлов и имя листа

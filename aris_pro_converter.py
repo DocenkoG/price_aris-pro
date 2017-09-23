@@ -4,6 +4,7 @@ import logging.config
 import configparser
 import shutil
 from aris_pro_converter_cables import convert2csv_cables 
+from aris_pro_converter_pro    import convert2csv_pro 
 import re
 import os
 
@@ -27,15 +28,15 @@ def convert2csv( pFileName   # file for convertation
 
     FileKey = isolateFileKey( pFileName)
     if   FileKey == 'cables' :
-        convert2csv_cables( pFileName)
-        '''
-    elif FileKey == 'dsp' :
-        convert2csv_dsp( pFileName)
-    elif FileKey == 'pa'  :
-        convert2csv_pa( pFileName)
+         convert2csv_cables( pFileName)
     elif FileKey == 'pro' :
-        convert2csv_pro( pFileName)
-        '''
+         convert2csv_pro( pFileName)
+         '''
+    elif FileKey == 'dsp' :
+         convert2csv_dsp( pFileName)
+    elif FileKey == 'pa'  :
+         convert2csv_pa( pFileName)
+         '''
     else :
         log.info('File ' + pFileName + ' - ignore')
     if os.path.exists( myname+'_'+FileKey+'.csv'):
@@ -52,6 +53,4 @@ def isolateFileKey( sourceString):
         key = is_fname.group(1)         # выделяю ключ из имени файла
     else:
         key = '' 
-    print('sourceString=<'+sourceString+'>')
-    print('key=<'+key.lower()+'>')
     return key.lower()
