@@ -31,7 +31,7 @@ def main( ):
     log.info('------------  '+ myname +'  ------------')
 
     aris_pro_downloader.download( myname ) 
-    #aris_pro_converter.convert2csv( 'new_Price_pro_130617.xls', myname )
+    #aris_pro_converter.convert2csv( new_files )
     #    shutil.copy2( myname + '.csv', 'c://AV_PROM/prices/' + myname +'/'+ myname + '.csv')
     #    shutil.copy2( 'python.log',    'c://AV_PROM/prices/' + myname +'/python.log')
 

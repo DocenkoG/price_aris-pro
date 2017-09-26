@@ -63,7 +63,7 @@ def getCell(  row       # номер строки
     ccc = sheet.cell(row, col)
     cellType  = ccc.ctype
     cellValue = ccc.value
-    if (isDigit == 'Y' or isDigit == True) : 
+    if (isDigit == 'Y') : 
         if (cellValue == '') : 
             ss = '0'
         elif (cellType in (2,3)) :                  # numeric
@@ -74,7 +74,13 @@ def getCell(  row       # номер строки
         else :
             ss = '0'
     else :
-        ss = str(cellValue)
+        if (cellType in (2,3)) :                    # numeric
+            if int(cellValue) == cellValue:
+                ss = str(int(cellValue))
+            else :
+                ss = str(cellValue)
+        else :
+            ss = str(cellValue)
     return ss
 
 

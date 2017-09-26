@@ -5,6 +5,8 @@ import configparser
 import shutil
 from aris_pro_converter_cables import convert2csv_cables 
 from aris_pro_converter_pro    import convert2csv_pro 
+from aris_pro_converter_dsp    import convert2csv_dsp 
+from aris_pro_converter_pa     import convert2csv_pa 
 import re
 import os
 
@@ -31,12 +33,10 @@ def convert2csv( pFileName   # file for convertation
          convert2csv_cables( pFileName)
     elif FileKey == 'pro' :
          convert2csv_pro( pFileName)
-         '''
     elif FileKey == 'dsp' :
          convert2csv_dsp( pFileName)
     elif FileKey == 'pa'  :
          convert2csv_pa( pFileName)
-         '''
     else :
         log.info('File ' + pFileName + ' - ignore')
     if os.path.exists( myname+'_'+FileKey+'.csv'):

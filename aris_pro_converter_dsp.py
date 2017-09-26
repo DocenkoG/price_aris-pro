@@ -19,7 +19,7 @@ def make_loger():
 
 
 
-def convert2csv_pro( pFileName):
+def convert2csv_dsp( pFileName):
     global log
     global SheetName
     #global FilenameIn
@@ -45,7 +45,7 @@ def convert2csv_pro( pFileName):
     log.debug('Begin ' + __name__ + ' convert2csv')
 
     # Прочитать конфигурацию из файла
-    ff = config_read( 'aris_pro_cfg_pro' )
+    ff = config_read( 'aris_pro_cfg_dsp' )
     log.debug('Открываю файл '+ pFileName)
 #   book = openpyxl.load_workbook(filename = pFileName, read_only=False, keep_vba=False, data_only=False)
     book = xlrd.open_workbook( pFileName.encode('cp1251'), formatting_info=True)
@@ -54,11 +54,9 @@ def convert2csv_pro( pFileName):
     ssss = []
     line_qty = 0
     for sh in book.sheets() :
-        if sh.name in ('Световое оборудование') :                   # пропускаю ненужные страницы
-            continue
         log.debug('Устанавливаю страницу ' + sh.name )
         log.debug('На странице %d строк' % sh.nrows)
-                                                                    # цикл по строкам страницы
+                                                                 # цикл по строкам страницы
         brand = ''
         grpName = sh.name
         for i in range( 0, sh.nrows) :

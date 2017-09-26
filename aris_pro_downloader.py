@@ -4,6 +4,7 @@ import logging
 import logging.config
 import time
 import shutil
+import re
 from   aris_pro_converter import convert2csv
  
 
@@ -21,7 +22,7 @@ def download( myname ):
     pathDwnld = './tmp'
     pathPython2 = 'c:/Python27/python.exe'
     make_loger()
-    retCode = False
+    retCode = []
     log.debug( 'Begin '   + __name__ + '  downLoader' )
     fUnitName = os.path.join( myname +'_unittest.py')
     if  not os.path.exists(fUnitName):
