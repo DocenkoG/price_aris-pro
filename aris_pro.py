@@ -28,12 +28,16 @@ def main( ):
     global  mydir
    
     make_loger()
-    log.info('------------  '+ myname +'  ------------')
+    log.info('------------  '+ myname +'  - начало обработки ------------')
 
     aris_pro_downloader.download( myname ) 
     #aris_pro_converter.convert2csv( new_files )
     #    shutil.copy2( myname + '.csv', 'c://AV_PROM/prices/' + myname +'/'+ myname + '.csv')
     #    shutil.copy2( 'python.log',    'c://AV_PROM/prices/' + myname +'/python.log')
+    log.info('------------  '+ myname +'  - обработка завершена ------------')
+    if os.path.exists( 'python.log'):
+        shutil.copy2(  'python.log',    'c://AV_PROM/prices/' + myname +'/python.log')
+
 
 if __name__ == '__main__':
     global  myname

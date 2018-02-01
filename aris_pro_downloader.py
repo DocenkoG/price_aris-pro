@@ -68,6 +68,11 @@ def download( myname ):
                         retCode = convert2csv( FnewName, myname)
                     else:
                         log.debug( 'Предыдущий прайс не старый, копироавать не надо.' )
+                        FileKey = isolateFileKey( DnewFile)
+                        f1 = myname+'_'+FileKey+'.csv'
+                        f2 ='c:\\AV_PROM\\prices\\'+myname+'\\'+ f1
+                        if os.path.exists(f1) : os.utime(f1, None)
+                        if os.path.exists(f2) : os.utime(f2, None)
                     # Убрать скачанные файлы
                     if  os.path.exists(DnewFile):  
                         os.remove(DnewFile)
@@ -78,3 +83,14 @@ def download( myname ):
             log.debug( 'Скачалось несколько файлов. Надо разбираться ...')
 
     return retCode
+
+
+
+def isolateFileKey( sourceString):
+    re_fname = re.compile('^.+_([^_]+)_[0-9]+\..*$', re.LOCALE | re.IGNORECASE )
+    is_fname = re_fname.match(sourceString)
+    if is_fname:                        # Файл соответствует шаблону имени
+        key = is_fname.group(1)         # выделяю ключ из имени файла
+    else:
+        key = '' 
+    return key.lower()

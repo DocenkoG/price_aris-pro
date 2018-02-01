@@ -41,8 +41,6 @@ def convert2csv( pFileName   # file for convertation
         log.info('File ' + pFileName + ' - ignore')
     if os.path.exists( myname+'_'+FileKey+'.csv'):
         shutil.copy2(  myname+'_'+FileKey+'.csv', 'c://AV_PROM/prices/' + myname +'/'+ myname+'_'+FileKey+'.csv')
-    if os.path.exists( 'python.log'):
-        shutil.copy2(  'python.log',    'c://AV_PROM/prices/' + myname +'/python.log')
     
 
 
