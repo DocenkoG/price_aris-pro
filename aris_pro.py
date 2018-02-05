@@ -7,20 +7,52 @@ import io
 import sys
 import configparser
 import time
-import aris_pro_converter
-import aris_pro_downloader
 import shutil
 import requests, lxml.html
-from aris_pro_converter    import convert2csv
+#from aris_pro_converter    import convert2csv
+from aris_pro_converter_cables import convert2csv_cables 
+from aris_pro_converter_pro    import convert2csv_pro 
+from aris_pro_converter_dsp    import convert2csv_dsp 
+from aris_pro_converter_pa     import convert2csv_pa 
 import re
 
 global log
 global myname
 
 
+def convert2csv( pFileName   # file for convertation
+               , myname      # organisatiom name (dir name)
+               ) :
+    global log
+    global SheetName
+    global FilenameIn
+    global FilenameOut
+    make_loger()
+    log.debug('Begin  convert2csv '+ pFileName)
+
+    FileKey = isolateFileKey( pFileName)
+    cfgFName = "aris_pro_cfg_"+ FileKey+".cfg"
+    if os.path.exists(cfgFName):
+        cfg = config_read(cfgFName)
+        if  is_file_fresh( pFileName, int(cfg.get('basic','срок годности'))):
+            if   FileKey == 'cables' :
+                 convert2csv_cables( pFileName)
+            elif FileKey == 'pro' :
+                 convert2csv_pro( pFileName)
+            elif FileKey == 'dsp' :
+                 convert2csv_dsp( pFileName)
+            elif FileKey == 'pa'  :
+                 convert2csv_pa( pFileName)
+            else :
+                 log.info('File ' + pFileName + ' - ignore')
+    if os.name == 'nt' :   
+        if os.path.exists( myname+'_'+FileKey+'.csv'):
+            shutil.copy2(  myname+'_'+FileKey+'.csv', 'c://AV_PROM/prices/' + myname +'/'+ myname+'_'+FileKey+'.csv')
+
+
+
 def download( cfg ):
     global myname
-    pathDwnld = './tmp'
     retCode     = False
     filename_new= cfg.get('download','filename_new')
     filename_old= cfg.get('download','filename_old')
@@ -66,48 +98,33 @@ def download( cfg ):
     if filename_new[-4:] == '.zip':                                # Архив. Обработка не завершена
         log.debug( 'Zip-архив. Разархивируем '+ filename_new)
         work_dir = os.getcwd()
-        if not os.path.exists('tmp'):   os.mkdir('tmp')                                       
-        os.chdir( os.path.join( pathDwnld ))
-        dir_befo_download = set(os.listdir(os.getcwd()))
-        print( dir_befo_download)
-        os.remove( '*.xls*')
-        dir_befo_download = set(os.listdir(os.getcwd()))
-        print( dir_befo_download)
-        os.system('unzip -oj ' + filename_new)
-        dir_afte_download = set(os.listdir(os.getcwd()))
+        if not os.path.exists('tmp'):
+            os.mkdir('tmp')                                       
+        os.chdir( os.path.join( 'tmp' ))
+        for f in os.listdir("."):
+            if f.endswith(".xls"):
+                os.remove(f)
+        dir_befo_download = set(os.listdir("."))
+        os.system('unzip -oj ' + os.path.join('..', filename_new))
+        dir_afte_download = set(os.listdir("."))
         new_files = list( dir_afte_download.difference(dir_befo_download))
         print(new_files)
+        
+        os.chdir( '..' )
+        for new_file in new_files :
+            FoldName = 'old_' + new_file                                        # Предыдущая копия прайса, для сравнения даты
+            FnewName = 'new_' + new_file                                        # Файл, с которым работает макрос
+            if  os.path.exists( FnewName) : 
+                if os.path.exists( FoldName): os.remove( FoldName)
+                os.rename( FnewName, FoldName)
+            os.rename(os.path.join('tmp', new_file), FnewName)
 
     for new_file in new_files :
-        new_ext  = os.path.splitext(new_file)[-1]
-        DnewFile = new_file
-        new_file_date = os.path.getmtime(DnewFile)
-        log.debug( 'Файл из архива ' +DnewFile + ' имеет дату ' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(new_file_date) ) )
-        DnewPrice = DnewFile
-        FoldName = 'old_' + new_file                                        # Предыдущая копия прайса, для сравнения даты
-        FnewName = 'new_' + new_file                                        # Файл, с которым работает макрос
-        if  (not os.path.exists( FnewName)) or new_file_date>os.path.getmtime(FnewName) : 
-            log.debug( 'Предыдущего прайса нет или он устарел. Копируем новый.' )
-            if os.path.exists( FoldName): os.remove( FoldName)
-            if os.path.exists( FnewName): os.rename( FnewName, FoldName)
-            os.rename(DnewFile, FnewName)
-            #
-            #       Вызов конвертации файла
-            #
-            retCode = convert2csv( FnewName, 'aris_pro')
-        else:
-            log.debug( 'Предыдущий прайс не старый, копироавать не надо.' )
-            FileKey = isolateFileKey( DnewFile)
-            f1 = myname+'_'+FileKey+'.csv'
-            f2 ='c:\\AV_PROM\\prices\\'+myname+'\\'+ f1
-            if os.path.exists(f1) : os.utime(f1, None)
-            if os.path.exists(f2) : os.utime(f2, None)
-        # Убрать скачанные файлы
-        if  os.path.exists(DnewFile):  
-            os.remove(DnewFile)
-#§======================================================                        
+        #
+        #       Вызов конвертации файла
+        #
+        retCode = convert2csv( 'new_' + new_file, 'aris_pro')
     return retCode
-    return new_files[0]
 
 
 
@@ -166,13 +183,6 @@ def processing(cfgFName):
     
     if cfg.has_section('download'):
         result = download(cfg)
-    if is_file_fresh( filename_in, int(cfg.get('basic','срок годности'))):
-        #os.system( dealerName + '_converter_xlsx.xlsm')
-        convert2csv(cfg)
-    folderName = os.path.basename(os.getcwd())
-    #if os.path.exists( filename_out): shutil.copy2( filename_out, 'c://AV_PROM/prices/' +folderName+'/'+filename_out)
-    if os.path.exists( 'python.log'): shutil.copy2( 'python.log', 'c://AV_PROM/prices/' +folderName+'/python.log')
-    if os.path.exists( 'python.1'  ): shutil.copy2( 'python.log', 'c://AV_PROM/prices/' +folderName+'/python.1'  )
     
 
 
