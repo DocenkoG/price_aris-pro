@@ -45,7 +45,7 @@ def convert2csv( pFileName   # file for convertation
 
 
 def isolateFileKey( sourceString):
-    re_fname = re.compile('^.+_([^_]+)_[0-9]+\..*$', re.LOCALE | re.IGNORECASE )
+    re_fname = re.compile('^.+_([^_]+)_[0-9]+\..*$',  re.IGNORECASE )
     is_fname = re_fname.match(sourceString)
     if is_fname:                        # Файл соответствует шаблону имени
         key = is_fname.group(1)         # выделяю ключ из имени файла

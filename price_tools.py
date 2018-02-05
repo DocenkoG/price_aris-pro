@@ -4,7 +4,7 @@ import re
 
 
 def subInParentheses( sourceString):
-    re_parentheses = re.compile('^.*\(([^)]*)\).*$', re.LOCALE | re.IGNORECASE )
+    re_parentheses = re.compile('^.*\(([^)]*)\).*$',  re.IGNORECASE )
     is_parentheses = re_parentheses.match(sourceString)
     if is_parentheses:                        # Файл соответствует шаблону имени
         key = is_parentheses.group(1)         # выделяю ключ из имени файла
