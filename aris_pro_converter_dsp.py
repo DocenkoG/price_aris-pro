@@ -173,7 +173,7 @@ def config_read( myname ):
     log.debug('Begin config_read ' + cfgFName )
     
     config = configparser.ConfigParser()
-    if os.path.exists(cfgFName):     config.read( cfgFName)
+    if os.path.exists(cfgFName):     config.read( cfgFName,encoding='utf-8')
     else : log.debug('Не найден файл конфигурации.')
 
     # в разделе [cols_in] находится список интересующих нас колонок и номера столбцов исходного файла
