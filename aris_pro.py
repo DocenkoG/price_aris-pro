@@ -31,20 +31,20 @@ def convert2csv( pFileName   # file for convertation
     log.debug('Begin  convert2csv '+ pFileName)
 
     FileKey = isolateFileKey( pFileName)
-    cfgFName = "aris_pro_cfg_"+ FileKey+".cfg"
-    if os.path.exists(cfgFName):
-        cfg = config_read(cfgFName)
-        if  is_file_fresh( pFileName, int(cfg.get('basic','срок годности'))):
-            if   FileKey == 'cables' :
-                 convert2csv_cables( pFileName)
-            elif FileKey == 'pro' :
-                 convert2csv_pro( pFileName)
-            elif FileKey == 'dsp' :
-                 convert2csv_dsp( pFileName)
-            elif FileKey == 'pa'  :
-                 convert2csv_pa( pFileName)
-            else :
-                 log.info('File ' + pFileName + ' - ignore')
+    #cfgFName = "aris_pro_cfg_"+ FileKey+".cfg"
+    #if os.path.exists(cfgFName):
+    #    cfg = config_read(cfgFName)
+    #    if  is_file_fresh( pFileName, int(cfg.get('basic','срок годности'))):
+    if   FileKey == 'cables' :
+         convert2csv_cables( pFileName)
+    elif FileKey == 'pro' :
+         convert2csv_pro( pFileName)
+    elif FileKey == 'dsp' :
+         convert2csv_dsp( pFileName)
+    elif FileKey == 'pa'  :
+         convert2csv_pa( pFileName)
+    else :
+         log.info('File ' + pFileName + ' - ignore')
     if os.name == 'nt' :   
         if os.path.exists( myname+'_'+FileKey+'.csv'):
             shutil.copy2(  myname+'_'+FileKey+'.csv', 'c://AV_PROM/prices/' + myname +'/'+ myname+'_'+FileKey+'.csv')
@@ -53,7 +53,7 @@ def convert2csv( pFileName   # file for convertation
 
 def download( cfg ):
     global myname
-    retCode     = False
+    is_download_success = False
     filename_new= cfg.get('download','filename_new')
     filename_old= cfg.get('download','filename_old')
     if cfg.has_option('download','login'):     login       = cfg.get('download','login'    )
@@ -80,21 +80,26 @@ def download( cfg ):
                 print(url_file)
         if url_file == None :
             log.error('Не найден элемент %s на странице %s', href_text, url_download_page)
-            return False
+            is_download_success = False
         r = s.get(url_base +'/'+ url_file)
         log.debug('Загрузка файла %16d bytes   --- code=%d', len(r.content), r.status_code)
-        retCode = True
+        is_download_success = True
     except Exception as e:
         log.debug('Exception: <' + str(e) + '>')
 
-    if os.path.exists( filename_new) and os.path.exists( filename_old): 
-        os.remove( filename_old)
-        os.rename( filename_new, filename_old)
-    if os.path.exists( filename_new) :
-        os.rename( filename_new, filename_old)
-    f2 = open(filename_new, 'wb')                                  # Теперь записываем файл
-    f2.write(r.content)
-    f2.close()
+    if is_download_success :
+        if os.path.exists( filename_new) and os.path.exists( filename_old): 
+            os.remove( filename_old)
+            os.rename( filename_new, filename_old)
+        if os.path.exists( filename_new) :
+            os.rename( filename_new, filename_old)
+        f2 = open(filename_new, 'wb')                                  # Теперь записываем файл
+        f2.write(r.content)
+        f2.close()
+    else:
+        if not is_file_fresh( filename_new, int(cfg.get('download','срок годности'))):
+            return False
+            
     if filename_new[-4:] == '.zip':                                # Архив. Обработка не завершена
         log.debug( 'Zip-архив. Разархивируем '+ filename_new)
         work_dir = os.getcwd()
