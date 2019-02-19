@@ -45,9 +45,6 @@ def convert2csv( pFileName   # file for convertation
          convert2csv_pa( pFileName)
     else :
          log.info('File ' + pFileName + ' - ignore')
-    if os.name == 'nt' :   
-        if os.path.exists( myname+'_'+FileKey+'.csv'):
-            shutil.copy2(  myname+'_'+FileKey+'.csv', 'c://AV_PROM/prices/' + myname +'/'+ myname+'_'+FileKey+'.csv')
 
 
 
