@@ -50,6 +50,39 @@ def convert2csv( pFileName   # file for convertation
             shutil.copy2(  myname+'_'+FileKey+'.csv', 'c://AV_PROM/prices/' + myname +'/'+ myname+'_'+FileKey+'.csv')
 
 
+def download(cfg):
+    retCode = False
+    filename_new = cfg.get('download', 'filename_new')
+    filename_old = cfg.get('download', 'filename_old')
+    login = cfg.get('download', 'login')
+    password = cfg.get('download', 'password')
+    url_lk = cfg.get('download', 'url_lk')
+    url_file = cfg.get('download', 'url_file')
+
+    try:
+        s = requests.Session()
+        r = s.get(url_lk,
+                  auth=(login, password))  # ,headers = headers (И без него сработало, но где-то может понадобиться)
+        # page = lxml.html.fromstring(r.text)
+        # data = {'USER_LOGIN':login, 'USER_PASSWORD':password})
+        log.debug('Авторизация на %s   --- code=%d', url_lk, r.status_code)
+        r = s.get(url_file)
+        log.debug('Загрузка файла %24d bytes   --- code=%d', len(r.content), r.status_code)
+        retCode = True
+    except Exception as e:
+        log.debug('Exception: <' + str(e) + '>')
+
+    if os.path.exists(filename_new) and os.path.exists(filename_old):
+        os.remove(filename_old)
+        os.rename(filename_new, filename_old)
+    if os.path.exists(filename_new):
+        os.rename(filename_new, filename_old)
+    f2 = open(filename_new, 'wb')  # Теперь записываем файл
+    f2.write(r.content)
+    f2.close()
+    return retCode
+
+
 
 def download( cfg ):
     global myname
@@ -59,8 +92,8 @@ def download( cfg ):
     if cfg.has_option('download','login'):     login       = cfg.get('download','login'    )
     if cfg.has_option('download','password' ): password    = cfg.get('download','password' )
     if cfg.has_option('download','href_text'): href_text   = cfg.get('download','href_text' )
-    url_download_page= cfg.get('download','url_download_page'   )
-    url_base         = cfg.get('download','url_base' )
+    #url_download_page= cfg.get('download','url_download_page'   )
+    url_file = cfg.get('download','url_file')
     headers = {'User-Agent':'Mozilla/5.0 (Windows NT 6.0; rv:14.0) Gecko/20100101 Firefox/14.0.1',
                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                'Accept-Language':'ru-ru,ru;q=0.8,en-us;q=0.5,en;q=0.3',
@@ -70,6 +103,7 @@ def download( cfg ):
               }
     try:
         s = requests.Session()
+        '''
         r = s.get(url_download_page,  headers = headers)
         page = lxml.html.fromstring(r.text)
         url_file = None
@@ -81,7 +115,8 @@ def download( cfg ):
         if url_file == None :
             log.error('Не найден элемент %s на странице %s', href_text, url_download_page)
             is_download_success = False
-        r = s.get(url_base +'/'+ url_file)
+        '''
+        r = s.get(url_file)
         log.debug('Загрузка файла %16d bytes   --- code=%d', len(r.content), r.status_code)
         is_download_success = True
     except Exception as e:

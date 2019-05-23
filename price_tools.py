@@ -144,7 +144,7 @@ def getCell(  row       # номер строки
 
 
 def subInParentheses( sourceString):
-    re_parentheses = re.compile('^.*\(([^)]*)\).*$', re.LOCALE | re.IGNORECASE )
+    re_parentheses = re.compile('^.*\(([^)]*)\).*$',  re.IGNORECASE )
     is_parentheses = re_parentheses.match(sourceString)
     if is_parentheses:                        # Файл соответствует шаблону имени
         key = is_parentheses.group(1)         # выделяю ключ из имени файла
@@ -181,7 +181,7 @@ def currencyType(sheet, rowx, colx):
     Функция анализирует "формат ячейки" таблицы excel, является ли он "денежным"
     и какая валюта указана в этом формате.
     Распознаются не все валюты и способы их описания.
-    '''
+
     c = sheet.cell(rowx, colx)
     xf = sheet.book.xf_list[c.xf_index]
     fmt_obj = sheet.book.format_map[xf.format_key]
@@ -197,7 +197,8 @@ def currencyType(sheet, rowx, colx):
     else:
         val = ''
     return val
-
+    '''
+    return 'usd'
 '''
 
 [$$-409]#,##0.0

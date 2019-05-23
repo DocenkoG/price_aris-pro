@@ -7,12 +7,9 @@ import io
 import sys
 import configparser
 import time
-import openpyxl                   # Для .xlsx
-#import xlrd                         # для .xls
-from  price_tools import config_read, getCell, quoted, dump_cell, currencyTypeXlsx, subInParentheses, getCellXlsx
-import price_tools
-import csv
-
+# import openpyxl                   # Для .xlsx
+import xlrd                         # для .xls
+from  price_tools import getCell, quoted, dump_cell, currencyType, subInParentheses
 
 
 def make_loger():
@@ -22,111 +19,226 @@ def make_loger():
 
 
 
-def getXlsxString(sh, i, in_columns_j):
-    impValues = {}
-    for item in in_columns_j.keys() :
-        j = in_columns_j[item]
-        if item in ('закупка','продажа','цена') :
-            if getCellXlsx(row=i, col=j, isDigit='N', sheet=sh).find('звоните') >=0 :
-                impValues[item] = '0.1'
-            else :
-                impValues[item] = getCellXlsx(row=i, col=j, isDigit='Y', sheet=sh)
-            #print(sh, i, sh.cell( row=i, column=j).value, sh.cell(row=i, column=j).number_format, currencyType(sh, i, j))
-        elif item == 'валюта_по_формату':
-            impValues[item] = currencyTypeXlsx(row=i, col=j, sheet=sh)
-        else:
-            impValues[item] = getCellXlsx(row=i, col=j, isDigit='N', sheet=sh)
-    return impValues
-
-
-
 def convert2csv_pro( pFileName):
+    global log
+    global SheetName
+    #global FilenameIn
+    global FilenameOut
+    global out_columns_names
+    global out_columns_j
+    global in_columns_j
+    global colGrp
+    global colSGrp
+    global GrpFonti
+    global BrandFonti
+    global SubGrpFonti
+    global HeaderFonti
+    global RegularFonti
+    global HeaderFontSize
+    global RegularFontSize
+    global SubGrpBackgroundColor
+    global GrpBackgroundColor
+    global strHeader
+    global SubGrpFontSize
+    global GrpFontSize
     make_loger()
     log.debug('Begin ' + __name__ + ' convert2csv')
 
     # Прочитать конфигурацию из файла
-    cfg = config_read( 'aris_pro_cfg_pro.cfg' )
-    csvFName  = cfg.get('basic','filename_out')
-    out_cols = cfg.options("cols_out")
-    in_cols  = cfg.options("cols_in")
-    out_template = {}
-    for vName in out_cols :
-         out_template[vName] = cfg.get("cols_out", vName)
-    in_cols_j = {}
-    for vName in in_cols :
-         in_cols_j[vName] = cfg.getint("cols_in",  vName)
-
+    ff = config_read( 'aris_pro_cfg_pro' )
     log.debug('Открываю файл '+ pFileName)
-    book = openpyxl.load_workbook(filename = pFileName, read_only=False, keep_vba=False, data_only=False)
-#   book = xlrd.open_workbook( pFileName.encode('cp1251'), formatting_info=True)
+#   book = openpyxl.load_workbook(filename = pFileName, read_only=False, keep_vba=False, data_only=False)
+    book = xlrd.open_workbook( pFileName.encode('cp1251'), formatting_info=True)
 #   book = xlrd.open_workbook( os.path.join( mydir, pFileName.encode('cp1251')), formatting_info=True)
-        
-    outFile = open( csvFName, 'w', newline='', encoding='CP1251', errors='replace')
-    csvWriter = csv.DictWriter(outFile, fieldnames=out_cols )
-    csvWriter.writeheader()
+
     ssss = []
     line_qty = 0
-#   for sh in book.sheets() :
-    for SheetName in book.get_sheet_names():                        # Организую цикл по страницам
-        if SheetName in ('Световое оборудование') :                 # пропускаю ненужные страницы
+    for sh in book.sheets() :
+        if sh.name in ('Световое оборудование') :                   # пропускаю ненужные страницы
             continue
-        log.debug('Устанавливаю страницу ' + SheetName )
-        #log.debug('На странице %d строк' % sh.nrows)
-        log.debug('На странице %d строк' % book[SheetName].max_row)
+        log.debug('Устанавливаю страницу ' + sh.name )
+        log.debug('На странице %d строк' % sh.nrows)
                                                                     # цикл по строкам страницы
-        sh = book[SheetName]                                        # xlsx   
-        grpName = SheetName
-        subGrpName= ''
         brand = ''
-        recOut  ={}
-        '''                                   # Блок проверки свойств для распознавания групп XLSX                                  
-        for i in range(52, 58):                                                         
-            i_last = i
-            ccc = sh.cell( row=i, column=2 )
-            print(i, ccc.value)
-            print(ccc.font.name, ccc.font.sz, ccc.font.b, ccc.font.i, ccc.font.color, '------', ccc.fill.fgColor.index)
-            print('------')
-        '''
-        #for i in range(1, sheet.nrows) :                                           # xls
-        for i in range(1, sh.max_row +1) :                                       # xlsx
-            i_last = i
+        grpName = sh.name
+        for i in range( 0, sh.nrows) :
+            line_qty += 1
+            xfx = sh.cell_xf_index(i, colSGrp-1)
+            xf  = book.xf_list[xfx]
+            bgcx  = xf.background.pattern_colour_index
+            fonti = xf.font_index
             try:
-                ccc = sh.cell( row=i, column=in_cols_j['подгруппа'] )
-                impValues = getXlsxString(sh, i, in_cols_j)
-                #impValues = getXlsString(sheet, i, in_cols_j)
-                #print( impValues['закупка'])
-                if  ccc.fill.fgColor.index == 48 :                                  # Подгруппа
-                    subGrpNameNQ = sh.cell(row=i, column=in_cols_j['подгруппа']).value
+                ccc = sh.cell(i, colSGrp-1)
+                if ccc.value == None :
+                    print (i, colSGrp, 'Пусто!!!')
+                    continue
+                '''                                        # Атрибуты шрифта для настройки конфига
+                font = book.font_list[fonti]
+                print( '---------------------- Строка', i, '-----------------------' )
+                print( 'Строка', i, sh.cell(i, 1).value)
+                print( 'background_colour_index=',bgcx)
+                print( 'fonti=', fonti)
+                print( 'bold=', font.bold)
+                print( 'weight=', font.weight)
+                print( 'height=', font.height)
+                print( 'italic=', font.italic)
+                print( 'colour_index=', font.colour_index )
+                print( 'name=', font.name)
+                
+                continue
+                '''
+
+#                if (GrpBackgroundColor == ???):                                # Группа
+#                    grpName = quoted(sh.cell(i,colGrp-1).value)
+#                    subGrpName = 'zzzzzzzz'
+#                    brand = 'Klz'
+#                    print('группа', grpName)
+                if SubGrpBackgroundColor == bgcx :                              # Подгруппа
+                    subGrpNameNQ = sh.cell(i, colSGrp-1).value
                     subGrpName = quoted(subGrpNameNQ)
                     brand = subInParentheses( subGrpName)
-                elif impValues['цена']=='0': # (ccc.value == None) or (ccc2.value == None) :    # Пустая строка
+#                if True == ccc.font.bold :                                     # Заголовок таблицы
+#                    print('ddd')
+#                    pass
+                elif (  '' == sh.cell(i, in_columns_j['цена']   -1).value) \
+                    or ('' == sh.cell(i, in_columns_j['артикул']-1).value) :    # Пустая строка
                     pass
-                    #print( 'Пустая строка. i=',i, impValues )
-                else :  
-                    #impValues['валюта'] = currencyTypeXlsx(sh, i, in_cols_j['валюта']-1)
-                    impValues['бренд'] = brand
-                    impValues['группа_'] = grpName
-                    impValues['подгруппа'] = subGrpName
-                    for outColName in out_template.keys() :
-                        shablon = out_template[outColName]
-                        for key in impValues.keys():
-                            if shablon.find(key) >= 0 :
-                                shablon = shablon.replace(key, impValues[key])
-                        if (outColName == 'закупка') and ('*' in shablon) :
-                            vvv1 = float( shablon[ :shablon.find('*')     ] )
-                            vvv2 = float( shablon[  shablon.find('*')+1:  ] )
-                            #print(vvvv)
-                            shablon = str( float(vvv1) * float(vvv2) )
-                        recOut[outColName] = shablon
+                else :                                                          # Информационная строка
+                    sss = []                                                    # формируемая строка для вывода в файл
+                    for outColName in out_columns_names :
+                        if outColName in out_columns_j :
+                            if outColName in ('закупка','продажа','цена') :
+                                ss = getCell(i, out_columns_j[outColName]-1, 'Y', sh)
+                            else:
+                                ss = quoted( getCell(i, out_columns_j[outColName]-1, 'N', sh))
+                        else :
+                            # вычисляемое поле
+                            if   outColName == 'бренд' :
+                                ss = brand
+                            elif outColName == 'наименование' :
+                                s1 = getCell(i, in_columns_j['модель']-1,   'N', sh)
+                                s2 = getCell(i, in_columns_j['описание']-1, 'N', sh)
+                                ss = quoted( subGrpNameNQ + ' ' + s1 + ' ' + s2)
+                            elif outColName == 'закупка' :
+                                s1 = getCell(i, in_columns_j['цена']-1,     'Y', sh)
+                                ss = str( float(s1)*0.75)
+                            elif outColName == 'валюта' :
+                                ss = currencyType(sh, i, in_columns_j['валюта']-1)
+                            else :
+                                log.debug('Не определено вычисляемое поле: <' + outColName + '>' )
+                        sss.append(ss)
 
-                    csvWriter.writerow(recOut)
-
+                    sss.append(brand)
+                    sss.append(grpName)
+                    sss.append(subGrpName)
+                    ssss.append(','.join(sss))
             except Exception as e:
-                print(e)
-                if str(e) == "'NoneType' object has no attribute 'rgb'":
-                    pass
-                else:
-                    log.debug('Exception: <' + str(e) + '> при обработке строки ' + str(i) +'.' )
+                log.debug('Exception: <' + str(e) + '> при обработке строки ' + str(i) )
+                raise e
 
-    log.info('Обработано ' +str(i_last)+ ' строк.')
-    outFile.close()
+        log.debug('------------  Обработка страницы завершена. ------------')
+
+    f2 = open( FilenameOut, 'w', encoding='cp1251')
+    f2.write(strHeader  + ',\n')
+    data = ',\n'.join(ssss) +','
+    dddd = data.encode(encoding='cp1251', errors='replace')
+    data = dddd.decode(encoding='cp1251')
+    f2.write(data)
+    f2.close()
+
+
+
+def config_read( myname ):
+    global log
+    global SheetName
+    #global FilenameIn
+    global FilenameOut
+    global out_columns_names
+    global out_columns_j
+    global in_columns_j
+    global colGrp
+    global colSGrp
+    global GrpFonti
+    global SubGrpFonti
+    global BrandFonti
+    global HeaderFonti
+    global HeaderFontSize
+    global RegularFonti
+    global RegularFontSize
+    global SubGrpBackgroundColor
+    global GrpBackgroundColor
+    global strHeader
+    global SubGrpFontSize
+    global GrpFontSize
+
+    cfgFName = myname + '.cfg'
+    log.debug('Begin config_read ' + cfgFName )
+
+    config = configparser.ConfigParser()
+    if os.path.exists(cfgFName):     config.read( cfgFName,encoding='utf-8')
+    else : log.debug('Не найден файл конфигурации.')
+
+    # в разделе [cols_in] находится список интересующих нас колонок и номера столбцов исходного файла
+    in_columns_names = config.options('cols_in')
+    in_columns_j = {}
+    for vName in in_columns_names :
+        if ('' != config.get('cols_in', vName)) :
+            in_columns_j[vName] = config.getint('cols_in', vName)
+
+    # По разделу [cols_out] формируем перечень выводимых колонок и строку заголовка результирующего CSV файла
+    temp_list = config.options('cols_out')
+    temp_list.sort()
+
+    out_columns_names = []
+    for vName in temp_list :
+        if ('' != config.get('cols_out', vName)) :
+            out_columns_names.append(vName)
+
+    out_columns_j = {}
+    for vName in out_columns_names :
+        tName = config.get('cols_out', vName)
+        if  tName in in_columns_j :
+            out_columns_j[vName] = in_columns_j[tName]
+    print('-----------------------------------')
+    for vName in out_columns_j :
+        print(vName, '\t', out_columns_j[vName])
+    print('-----------------------------------')
+    strHeader = ','.join(out_columns_names)           +',бренд,группа,подгруппа'
+    print('HEAD =', strHeader)
+
+    # считываем имена файлов и имя листа
+    #FilenameIn   = config.get('input','Filename_in' )
+    SheetName    = config.get('input','SheetName'   )
+    FilenameOut  = config.get('input','Filename_out')
+    print('SHEET=', SheetName)
+
+    # считываем признаки группы и подгруппы
+    if ('' != config.get('grp_properties',  'группа')) :
+        colGrp               = config.getint('grp_properties',     'группа')
+    if ('' != config.get('grp_properties',  'подгруппа')) :
+        colSGrp              = config.getint('grp_properties',  'подгруппа')
+    if ('' != config.get('grp_properties',  'GrpFonti')) :
+        GrpFonti             = config.getint('grp_properties',   'GrpFonti')
+    if ('' != config.get('grp_properties',  'SubGrpFonti')) :
+        SubGrpFonti          = config.getint('grp_properties','SubGrpFonti')
+    if ('' != config.get('grp_properties',  'BrandFonti')) :
+        BrandFonti           = config.getint('grp_properties', 'BrandFonti')
+    if ('' != config.get('grp_properties',  'HeaderFonti')) :
+        HeaderFonti          = config.getint('grp_properties','HeaderFonti')
+    if ('' != config.get('grp_properties',  'RegularFonti')) :
+        RegularFonti         = config.getint('grp_properties','RegularFonti')
+    if ('' != config.get('grp_properties',  'HeaderFontSize')) :
+        HeaderFontSize       = config.getint('grp_properties','HeaderFontSize')
+    if ('' != config.get('grp_properties',  'RegularFontSize')) :
+        RegularFontSize      = config.getint('grp_properties','RegularFontSize')
+    if ('' != config.get('grp_properties',  'SubGrpFontSize')):
+        SubGrpFontSize       = config.getint('grp_properties','SubGrpFontSize')
+    if ('' != config.get('grp_properties',  'GrpFontSize')) :
+        GrpFontSize          = config.getint('grp_properties',   'GrpFontSize')
+    if ('' != config.get('grp_properties',  'SubGrpBackgroundColor')) :
+        SubGrpBackgroundColor= config.getint('grp_properties','SubGrpBackgroundColor')
+    if ('' != config.get('grp_properties',  'GrpBackgroundColor')) :
+        GrpBackgroundColor   = config.getint('grp_properties',   'GrpBackgroundColor')
+    subgrpfontbold           = config.get('grp_properties','subgrpfontbold')
+    grpfontbold              = config.get('grp_properties',   'grpfontbold')
+    return
