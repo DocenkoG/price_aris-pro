@@ -120,7 +120,14 @@ def convert2csv_pa( pFileName):
                                 s2 = getCell(i, in_columns_j['описание']-1, 'N', sh)
                                 ss = quoted( subGrpNameNQ + ' ' + s1 + ' ' + s2)
                             elif outColName == 'закупка' :
-                                s1 = getCell(i, in_columns_j['цена']-1,     'Y', sh)
+                                try:
+                                    s1 = getCell(i, in_columns_j['цена']-1,     'Y', sh)
+                                except Exception as e:
+                                    s1 = getCell(i, in_columns_j['цена']-1,     'N', sh)
+                                    if s1 == 'по запросу':
+                                        s1 = '0.1'
+                                    else:
+                                        s1 = '0'
                                 ss = str( float(s1)*0.75)
                             elif outColName == 'валюта' :
                                 ss = currencyType(sh, i, in_columns_j['валюта']-1)

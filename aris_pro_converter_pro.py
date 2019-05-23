@@ -50,7 +50,7 @@ def convert2csv_pro( pFileName):
 #   book = openpyxl.load_workbook(filename = pFileName, read_only=False, keep_vba=False, data_only=False)
     book = xlrd.open_workbook( pFileName.encode('cp1251'), formatting_info=True)
 #   book = xlrd.open_workbook( os.path.join( mydir, pFileName.encode('cp1251')), formatting_info=True)
-        
+
     ssss = []
     line_qty = 0
     for sh in book.sheets() :
@@ -87,9 +87,9 @@ def convert2csv_pro( pFileName):
                 
                 continue
                 '''
-    
-#                if (GrpBackgroundColor == ???):                                # Группа 
-#                    grpName = quoted(sh.cell(i,colGrp-1).value)   
+
+#                if (GrpBackgroundColor == ???):                                # Группа
+#                    grpName = quoted(sh.cell(i,colGrp-1).value)
 #                    subGrpName = 'zzzzzzzz'
 #                    brand = 'Klz'
 #                    print('группа', grpName)
@@ -108,10 +108,10 @@ def convert2csv_pro( pFileName):
                     for outColName in out_columns_names :
                         if outColName in out_columns_j :
                             if outColName in ('закупка','продажа','цена') :
-                                ss = getCell(i, out_columns_j[outColName]-1, 'Y', sh) 
+                                ss = getCell(i, out_columns_j[outColName]-1, 'Y', sh)
                             else:
                                 ss = quoted( getCell(i, out_columns_j[outColName]-1, 'N', sh))
-                        else : 
+                        else :
                             # вычисляемое поле
                             if   outColName == 'бренд' :
                                 ss = brand
@@ -127,7 +127,7 @@ def convert2csv_pro( pFileName):
                             else :
                                 log.debug('Не определено вычисляемое поле: <' + outColName + '>' )
                         sss.append(ss)
-        
+
                     sss.append(brand)
                     sss.append(grpName)
                     sss.append(subGrpName)
@@ -135,9 +135,9 @@ def convert2csv_pro( pFileName):
             except Exception as e:
                 log.debug('Exception: <' + str(e) + '> при обработке строки ' + str(i) )
                 raise e
-    
+
         log.debug('------------  Обработка страницы завершена. ------------')
-    
+
     f2 = open( FilenameOut, 'w', encoding='cp1251')
     f2.write(strHeader  + ',\n')
     data = ',\n'.join(ssss) +','
@@ -173,7 +173,7 @@ def config_read( myname ):
 
     cfgFName = myname + '.cfg'
     log.debug('Begin config_read ' + cfgFName )
-    
+
     config = configparser.ConfigParser()
     if os.path.exists(cfgFName):     config.read( cfgFName,encoding='utf-8')
     else : log.debug('Не найден файл конфигурации.')
@@ -183,8 +183,8 @@ def config_read( myname ):
     in_columns_j = {}
     for vName in in_columns_names :
         if ('' != config.get('cols_in', vName)) :
-            in_columns_j[vName] = config.getint('cols_in', vName) 
-    
+            in_columns_j[vName] = config.getint('cols_in', vName)
+
     # По разделу [cols_out] формируем перечень выводимых колонок и строку заголовка результирующего CSV файла
     temp_list = config.options('cols_out')
     temp_list.sort()
@@ -193,7 +193,7 @@ def config_read( myname ):
     for vName in temp_list :
         if ('' != config.get('cols_out', vName)) :
             out_columns_names.append(vName)
-    
+
     out_columns_j = {}
     for vName in out_columns_names :
         tName = config.get('cols_out', vName)
@@ -201,17 +201,17 @@ def config_read( myname ):
             out_columns_j[vName] = in_columns_j[tName]
     print('-----------------------------------')
     for vName in out_columns_j :
-        print(vName, '\t', out_columns_j[vName])    
+        print(vName, '\t', out_columns_j[vName])
     print('-----------------------------------')
     strHeader = ','.join(out_columns_names)           +',бренд,группа,подгруппа'
     print('HEAD =', strHeader)
 
     # считываем имена файлов и имя листа
     #FilenameIn   = config.get('input','Filename_in' )
-    SheetName    = config.get('input','SheetName'   )      
+    SheetName    = config.get('input','SheetName'   )
     FilenameOut  = config.get('input','Filename_out')
     print('SHEET=', SheetName)
-    
+
     # считываем признаки группы и подгруппы
     if ('' != config.get('grp_properties',  'группа')) :
         colGrp               = config.getint('grp_properties',     'группа')
@@ -231,7 +231,7 @@ def config_read( myname ):
         HeaderFontSize       = config.getint('grp_properties','HeaderFontSize')
     if ('' != config.get('grp_properties',  'RegularFontSize')) :
         RegularFontSize      = config.getint('grp_properties','RegularFontSize')
-    if ('' != config.get('grp_properties',  'SubGrpFontSize')): 
+    if ('' != config.get('grp_properties',  'SubGrpFontSize')):
         SubGrpFontSize       = config.getint('grp_properties','SubGrpFontSize')
     if ('' != config.get('grp_properties',  'GrpFontSize')) :
         GrpFontSize          = config.getint('grp_properties',   'GrpFontSize')
@@ -241,4 +241,4 @@ def config_read( myname ):
         GrpBackgroundColor   = config.getint('grp_properties',   'GrpBackgroundColor')
     subgrpfontbold           = config.get('grp_properties','subgrpfontbold')
     grpfontbold              = config.get('grp_properties',   'grpfontbold')
-    return 
+    return
