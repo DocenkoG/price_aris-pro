@@ -47,7 +47,7 @@ def convert2csv( pFileName   # file for convertation
          log.info('File ' + pFileName + ' - ignore')
 
 
-def download(cfg):
+def download_00(cfg):
     retCode = False
     filename_new = cfg.get('download', 'filename_new')
     filename_old = cfg.get('download', 'filename_old')
