@@ -8,13 +8,14 @@ import sys
 import configparser
 import time
 import shutil
-import requests, lxml.html
+import requests
 #from aris_pro_converter    import convert2csv
 from aris_pro_converter_cables import convert2csv_cables 
 from aris_pro_converter_pro    import convert2csv_pro 
 from aris_pro_converter_dsp    import convert2csv_dsp 
 from aris_pro_converter_pa     import convert2csv_pa 
 import re
+from unrar.cffi import rarfile
 
 global log
 global myname
@@ -48,40 +49,6 @@ def convert2csv( pFileName   # file for convertation
     if os.name == 'nt' :   
         if os.path.exists( myname+'_'+FileKey+'.csv'):
             shutil.copy2(  myname+'_'+FileKey+'.csv', 'c://AV_PROM/prices/' + myname +'/'+ myname+'_'+FileKey+'.csv')
-
-
-def download(cfg):
-    retCode = False
-    filename_new = cfg.get('download', 'filename_new')
-    filename_old = cfg.get('download', 'filename_old')
-    login = cfg.get('download', 'login')
-    password = cfg.get('download', 'password')
-    url_lk = cfg.get('download', 'url_lk')
-    url_file = cfg.get('download', 'url_file')
-
-    try:
-        s = requests.Session()
-        r = s.get(url_lk,
-                  auth=(login, password))  # ,headers = headers (И без него сработало, но где-то может понадобиться)
-        # page = lxml.html.fromstring(r.text)
-        # data = {'USER_LOGIN':login, 'USER_PASSWORD':password})
-        log.debug('Авторизация на %s   --- code=%d', url_lk, r.status_code)
-        r = s.get(url_file)
-        log.debug('Загрузка файла %24d bytes   --- code=%d', len(r.content), r.status_code)
-        retCode = True
-    except Exception as e:
-        log.debug('Exception: <' + str(e) + '>')
-
-    if os.path.exists(filename_new) and os.path.exists(filename_old):
-        os.remove(filename_old)
-        os.rename(filename_new, filename_old)
-    if os.path.exists(filename_new):
-        os.rename(filename_new, filename_old)
-    f2 = open(filename_new, 'wb')  # Теперь записываем файл
-    f2.write(r.content)
-    f2.close()
-    return retCode
-
 
 
 def download( cfg ):
@@ -135,8 +102,8 @@ def download( cfg ):
         if not is_file_fresh( filename_new, int(cfg.get('download','срок годности'))):
             return False
             
-    if filename_new[-4:] == '.zip':                                # Архив. Обработка не завершена
-        log.debug( 'Zip-архив. Разархивируем '+ filename_new)
+    if filename_new[-4:] in ('.zip', '.rar'):                                # Архив. Обработка не завершена
+        log.debug( 'Архив, разархивируем '+ filename_new)
         work_dir = os.getcwd()
         if not os.path.exists('tmp'):
             os.mkdir('tmp')                                       
@@ -145,7 +112,16 @@ def download( cfg ):
             if f.endswith(".xls"):
                 os.remove(f)
         dir_befo_download = set(os.listdir("."))
-        os.system('unzip -oj ' + os.path.join('..', filename_new))
+        if filename_new[-4:] == '.zip':
+            os.system('unzip -oj ' + os.path.join('..', filename_new))
+        elif filename_new[-4:] == '.rar':
+            if (rarfile.is_rarfile(os.path.join('..', filename_new))):
+                rar_ref = rarfile.RarFile(os.path.join('..', filename_new))
+                for item in rar_ref.namelist():
+                    data = rar_ref.read(item)
+                    f2 = open(os.path.basename(item), 'wb')
+                    f2.write(data)
+                    f2.close
         dir_afte_download = set(os.listdir("."))
         new_files = list( dir_afte_download.difference(dir_befo_download))
         print(new_files)
