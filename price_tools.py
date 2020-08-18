@@ -181,7 +181,7 @@ def currencyType(sheet, rowx, colx):
     Функция анализирует "формат ячейки" таблицы excel, является ли он "денежным"
     и какая валюта указана в этом формате.
     Распознаются не все валюты и способы их описания.
-
+    '''
     c = sheet.cell(rowx, colx)
     xf = sheet.book.xf_list[c.xf_index]
     fmt_obj = sheet.book.format_map[xf.format_key]
@@ -195,11 +195,11 @@ def currencyType(sheet, rowx, colx):
     elif (fmt_str.find('USD')>=0) or (fmt_str.find('[$$')>=0) :
         val = 'USD'
     else:
-        val = ''
+        val = 'RUB'
     return val
-    '''
-    return 'usd'
+    
 '''
+    return 'usd'
 
 [$$-409]#,##0.0
 [$$-409]#,##0.0
