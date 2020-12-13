@@ -130,7 +130,9 @@ def download( cfg ):
             if  os.path.exists( FnewName) : 
                 if os.path.exists( FoldName): os.remove( FoldName)
                 os.rename( FnewName, FoldName)
-            os.rename(os.path.join('tmp', new_file), FnewName)
+            print('====== 1 =====', os.path.join('tmp', new_file), FnewName)
+            shutil.copy(            os.path.join('tmp', new_file), FnewName)
+            print('====== 2 =====', os.path.join('tmp', new_file), FnewName)
 
     for new_file in new_files :
         #
