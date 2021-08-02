@@ -1,5 +1,3 @@
-chcp 1251
+python.exe aris_pro.py
 
-"c:\Python37\python.exe" aris_pro.py
-
- pause
+rem pause

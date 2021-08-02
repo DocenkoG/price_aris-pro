@@ -15,7 +15,7 @@ from aris_pro_converter_pro    import convert2csv_pro
 from aris_pro_converter_dsp    import convert2csv_dsp 
 from aris_pro_converter_pa     import convert2csv_pa 
 import re
-from unrar.cffi import rarfile
+#from unrar.cffi import rarfile
 
 global log
 global myname
@@ -99,7 +99,7 @@ def download( cfg ):
         if not is_file_fresh( filename_new, int(cfg.get('download','срок годности'))):
             return False
             
-    if filename_new[-4:] in ('.zip', '.rar'):                                # Архив. Обработка не завершена
+    if filename_new[-4:] in ('.zip', '.rar'):                          # Архив. Обработка не завершена
         log.debug( 'Архив, разархивируем '+ filename_new)
         work_dir = os.getcwd()
         if not os.path.exists('tmp'):
@@ -112,13 +112,7 @@ def download( cfg ):
         if filename_new[-4:] == '.zip':
             os.system('unzip -oj ' + os.path.join('..', filename_new))
         elif filename_new[-4:] == '.rar':
-            if (rarfile.is_rarfile(os.path.join('..', filename_new))):
-                rar_ref = rarfile.RarFile(os.path.join('..', filename_new))
-                for item in rar_ref.namelist():
-                    data = rar_ref.read(item)
-                    f2 = open(os.path.basename(item), 'wb')
-                    f2.write(data)
-                    f2.close
+            os.system('"c:\\Program Files\\unrar\\UnRAR.exe" e -y ' + os.path.join('..', filename_new) + ' .\\')
         dir_afte_download = set(os.listdir("."))
         new_files = list( dir_afte_download.difference(dir_befo_download))
         print(new_files)
